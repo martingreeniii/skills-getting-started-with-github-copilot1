@@ -72,6 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // Click handler to unregister participant
             removeBtn.addEventListener('click', async (e) => {
               e.preventDefault();
+              const confirmed = confirm(`Remove ${pEmail} from ${name}?`);
+              if (!confirmed) return;
+              
               removeBtn.disabled = true;
               try {
                 const res = await fetch(
@@ -135,6 +138,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const email = document.getElementById("email").value;
     const activity = document.getElementById("activity").value;
+
+    // Validate email is a mergington.edu address
+    if (!email.endsWith("@mergington.edu")) {
+      messageDiv.textContent = "Only mergington.edu emails are allowed";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
+      return;
+    }
 
     try {
       const response = await fetch(
