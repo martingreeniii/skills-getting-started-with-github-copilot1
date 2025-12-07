@@ -86,7 +86,7 @@ section h3 {
 }
 
 .participants ul {
-  list-style: disc inside;
+  list-style: none;
   margin: 0;
   padding: 0;
 }
@@ -94,13 +94,20 @@ section h3 {
 .participant-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px dashed #eee;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #f0f0f0;
 }
 
 .participant-item:last-child {
   border-bottom: none;
+}
+
+.participant-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .avatar {
@@ -119,6 +126,21 @@ section h3 {
 .participant-name {
   font-size: 14px;
   color: #333;
+}
+
+.participant-delete {
+  background: transparent;
+  border: none;
+  color: #c62828;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.participant-delete:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .no-participants {

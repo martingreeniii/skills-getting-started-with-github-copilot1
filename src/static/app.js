@@ -42,6 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const li = document.createElement('li');
             li.className = 'participant-item';
 
+            const left = document.createElement('div');
+            left.className = 'participant-left';
+
             const avatar = document.createElement('span');
             avatar.className = 'avatar';
             const namePart = (pEmail || '').split('@')[0] || '';
@@ -58,8 +61,47 @@ document.addEventListener("DOMContentLoaded", () => {
             nameSpan.className = 'participant-name';
             nameSpan.textContent = pEmail;
 
-            li.appendChild(avatar);
-            li.appendChild(nameSpan);
+            left.appendChild(avatar);
+            left.appendChild(nameSpan);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'participant-delete';
+            removeBtn.setAttribute('aria-label', `Remove ${pEmail}`);
+            removeBtn.innerHTML = '&#x2716;'; // heavy multiplication x
+
+            // Click handler to unregister participant
+            removeBtn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              removeBtn.disabled = true;
+              try {
+                const res = await fetch(
+                  `/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(pEmail)}`,
+                  { method: 'DELETE' }
+                );
+                const json = await res.json();
+                if (res.ok) {
+                  // refresh activities to show updated list and availability
+                  await fetchActivities();
+                } else {
+                  console.error('Failed to remove participant', json);
+                  messageDiv.textContent = json.detail || 'Failed to remove participant';
+                  messageDiv.className = 'error';
+                  messageDiv.classList.remove('hidden');
+                  setTimeout(() => messageDiv.classList.add('hidden'), 4000);
+                  removeBtn.disabled = false;
+                }
+              } catch (err) {
+                console.error('Error removing participant', err);
+                messageDiv.textContent = 'Error removing participant';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                setTimeout(() => messageDiv.classList.add('hidden'), 4000);
+                removeBtn.disabled = false;
+              }
+            });
+
+            li.appendChild(left);
+            li.appendChild(removeBtn);
             ul.appendChild(li);
           });
         } else {
