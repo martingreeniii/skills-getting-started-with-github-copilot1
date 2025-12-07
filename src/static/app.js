@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      // Reset activity select so options don't accumulate on re-load
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -26,6 +28,50 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
+
+        // Participants section (bulleted list with small avatars)
+        const participantsDiv = document.createElement('div');
+        participantsDiv.className = 'participants';
+        const title = document.createElement('strong');
+        title.textContent = 'Participants:';
+        participantsDiv.appendChild(title);
+
+        const ul = document.createElement('ul');
+        if (details.participants && details.participants.length > 0) {
+          details.participants.forEach((pEmail) => {
+            const li = document.createElement('li');
+            li.className = 'participant-item';
+
+            const avatar = document.createElement('span');
+            avatar.className = 'avatar';
+            const namePart = (pEmail || '').split('@')[0] || '';
+            const initials = namePart
+              .split(/[\._-]+/)
+              .map(s => s && s[0])
+              .filter(Boolean)
+              .join('')
+              .slice(0, 2)
+              .toUpperCase();
+            avatar.textContent = initials || 'S';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'participant-name';
+            nameSpan.textContent = pEmail;
+
+            li.appendChild(avatar);
+            li.appendChild(nameSpan);
+            ul.appendChild(li);
+          });
+        } else {
+          const none = document.createElement('p');
+          none.className = 'no-participants';
+          none.textContent = 'No participants yet';
+          participantsDiv.appendChild(none);
+        }
+
+        if (ul.children.length) participantsDiv.appendChild(ul);
+
+        activityCard.appendChild(participantsDiv);
 
         activitiesList.appendChild(activityCard);
 
