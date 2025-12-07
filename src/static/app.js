@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      // Reset activity select so options don't accumulate on re-load
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -26,6 +28,95 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
+
+        // Participants section (bulleted list with small avatars)
+        const participantsDiv = document.createElement('div');
+        participantsDiv.className = 'participants';
+        const title = document.createElement('strong');
+        title.textContent = 'Participants:';
+        participantsDiv.appendChild(title);
+
+        const ul = document.createElement('ul');
+        if (details.participants && details.participants.length > 0) {
+          details.participants.forEach((pEmail) => {
+            const li = document.createElement('li');
+            li.className = 'participant-item';
+
+            const left = document.createElement('div');
+            left.className = 'participant-left';
+
+            const avatar = document.createElement('span');
+            avatar.className = 'avatar';
+            const namePart = (pEmail || '').split('@')[0] || '';
+            const initials = namePart
+              .split(/[\._-]+/)
+              .map(s => s && s[0])
+              .filter(Boolean)
+              .join('')
+              .slice(0, 2)
+              .toUpperCase();
+            avatar.textContent = initials || 'S';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'participant-name';
+            nameSpan.textContent = pEmail;
+
+            left.appendChild(avatar);
+            left.appendChild(nameSpan);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'participant-delete';
+            removeBtn.setAttribute('aria-label', `Remove ${pEmail}`);
+            removeBtn.innerHTML = '&#x2716;'; // heavy multiplication x
+
+            // Click handler to unregister participant
+            removeBtn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              const confirmed = confirm(`Remove ${pEmail} from ${name}?`);
+              if (!confirmed) return;
+              
+              removeBtn.disabled = true;
+              try {
+                const res = await fetch(
+                  `/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(pEmail)}`,
+                  { method: 'DELETE' }
+                );
+                const json = await res.json();
+                if (res.ok) {
+                  // refresh activities to show updated list and availability
+                  await fetchActivities();
+                } else {
+                  console.error('Failed to remove participant', json);
+                  messageDiv.textContent = json.detail || 'Failed to remove participant';
+                  messageDiv.className = 'error';
+                  messageDiv.classList.remove('hidden');
+                  setTimeout(() => messageDiv.classList.add('hidden'), 4000);
+                  removeBtn.disabled = false;
+                }
+              } catch (err) {
+                console.error('Error removing participant', err);
+                messageDiv.textContent = 'Error removing participant';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                setTimeout(() => messageDiv.classList.add('hidden'), 4000);
+                removeBtn.disabled = false;
+              }
+            });
+
+            li.appendChild(left);
+            li.appendChild(removeBtn);
+            ul.appendChild(li);
+          });
+        } else {
+          const none = document.createElement('p');
+          none.className = 'no-participants';
+          none.textContent = 'No participants yet';
+          participantsDiv.appendChild(none);
+        }
+
+        if (ul.children.length) participantsDiv.appendChild(ul);
+
+        activityCard.appendChild(participantsDiv);
 
         activitiesList.appendChild(activityCard);
 
@@ -47,6 +138,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const email = document.getElementById("email").value;
     const activity = document.getElementById("activity").value;
+
+    // Validate email is a mergington.edu address
+    if (!email.endsWith("@mergington.edu")) {
+      messageDiv.textContent = "Only mergington.edu emails are allowed";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
+      return;
+    }
 
     try {
       const response = await fetch(
